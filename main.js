@@ -1,7 +1,7 @@
 const TuringMachine = require('./src/TuringMachine')
 
 function start () {
-  const turingMachine = new TuringMachine()
+  const turingMachine = TuringMachine()
   const fileContent = turingMachine.readFile('entry.txt')
   const fileLines = fileContent.split('\n')
 
