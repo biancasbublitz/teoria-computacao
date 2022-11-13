@@ -6,10 +6,10 @@ function start () {
   const fileLines = fileContent.split('\n')
 
   const machineInfo = fileLines.slice(0, 4)
-  const machineTransitionFunctions = fileLines.slice(5, 21)
+  const machineTransitionFunctions = fileLines.filter(line => line.includes('('))
   const machineEntry = fileLines.slice(-1)
 
-  console.log(machineEntry)
+  console.log(machineTransitionFunctions)
 }
 
 start()
