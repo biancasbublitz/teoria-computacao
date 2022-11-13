@@ -1,5 +1,9 @@
 const fs = require('fs')
 
+function Error (errorText) {
+  return console.log(errorText)
+}
+
 function TuringMachine () {
   const machineHead = {
     currentState: '0',
@@ -18,7 +22,7 @@ function TuringMachine () {
     const machineEntryIsValid = checkMachineEntryIsValid()
 
     if (!machineEntryIsValid) {
-      return console.log('Invalid entry')
+      return Error('Invalid entry')
     }
 
     machineEntry.push(machineAlphabet.at(-1))
@@ -44,11 +48,11 @@ function TuringMachine () {
       const [state, entry] = condition.replace('(', '').replace(')', '').split(',')
 
       if (!availableStates.includes(state)) {
-        return console.log('Invalid parameter')
+        return Error('Invalid parameter')
       }
 
       if (!machineAlphabet.includes(entry)) {
-        return console.log('Invalid parameter')
+        return Error('Invalid parameter')
       }
 
       if (machineHead.currentState !== state || machineEntry[machineHead.currentPosition] !== entry) {
@@ -58,15 +62,15 @@ function TuringMachine () {
       const [nextState, nextEntry, nextPosition] = result.replace('(', '').replace(')', '').split(',')
 
       if (!availableStates.includes(nextState)) {
-        return console.log('Invalid parameter')
+        return Error('Invalid parameter')
       }
 
       if (!machineAlphabet.includes(nextEntry)) {
-        return console.log('Invalid parameter')
+        return Error('Invalid parameter')
       }
 
       if (!['L', 'R'].includes(nextPosition)) {
-        return console.log('Invalid parameter')
+        return Error('Invalid parameter')
       }
 
       machineHead.currentState = nextState
@@ -77,9 +81,9 @@ function TuringMachine () {
     }
 
     if (machineHead.currentState === availableStates.slice(-1)) {
-      return console.log('Accepted')
+      return Error('Accepted')
     } else {
-      return console.log('Denied')
+      return Error('Denied')
     }
   }
 
