@@ -10,16 +10,18 @@ function TuringMachine () {
   const fileLines = fileContent.split('\n')
 
   const [machineInfo, availableStates, entryAlphabet, machineAlphabet] = fileLines.slice(0, 4)
-  const machineEntry = (fileLines.slice(-1) + machineAlphabet.at(-1)).toString().split('')
+  const machineEntry = fileLines.slice(-1).toString().split('')
 
   function start () {
     machineHead.currentState = availableStates.split(' ')[0]
 
     const machineEntryIsValid = checkEntryAlphabet()
 
-    if (machineEntryIsValid) {
-      console.log('valid entry')
+    if (!machineEntryIsValid) {
+      return console.log('Invalid entry')
     }
+
+    machineEntry.push(machineAlphabet.at(-1))
 
     readTransitionFunctions()
   }
@@ -42,11 +44,11 @@ function TuringMachine () {
       const [state, entry] = condition.replace('(', '').replace(')', '').split(',')
 
       if (!availableStates.includes(state)) {
-        throw new Error('Invalid parameter')
+        return console.log('Invalid parameter')
       }
 
       if (!machineAlphabet.includes(entry)) {
-        throw new Error('Invalid parameter')
+        return console.log('Invalid parameter')
       }
 
       if (machineHead.currentState !== state || machineEntry[machineHead.currentPosition] !== entry) {
@@ -56,15 +58,15 @@ function TuringMachine () {
       const [nextState, nextEntry, nextPosition] = result.replace('(', '').replace(')', '').split(',')
 
       if (!availableStates.includes(nextState)) {
-        throw new Error('Invalid parameter')
+        return console.log('Invalid parameter')
       }
 
       if (!machineAlphabet.includes(nextEntry)) {
-        throw new Error('Invalid parameter')
+        return console.log('Invalid parameter')
       }
 
       if (!['L', 'R'].includes(nextPosition)) {
-        throw new Error('Invalid parameter')
+        return console.log('Invalid parameter')
       }
 
       machineHead.currentState = nextState
@@ -75,7 +77,9 @@ function TuringMachine () {
     }
 
     if (machineHead.currentState === availableStates.slice(-1)) {
-      console.log('Valid entry')
+      return console.log('Accepted')
+    } else {
+      return console.log('Denied')
     }
   }
 
