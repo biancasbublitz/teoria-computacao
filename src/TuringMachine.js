@@ -15,7 +15,7 @@ function TuringMachine () {
   function start () {
     machineHead.currentState = availableStates.split(' ')[0]
 
-    const machineEntryIsValid = checkEntryAlphabet()
+    const machineEntryIsValid = checkMachineEntryIsValid()
 
     if (!machineEntryIsValid) {
       return console.log('Invalid entry')
@@ -26,7 +26,7 @@ function TuringMachine () {
     readTransitionFunctions()
   }
 
-  function checkEntryAlphabet () {
+  function checkMachineEntryIsValid () {
     const filtered = machineEntry.filter(character => {
       return entryAlphabet.includes(character)
     })
