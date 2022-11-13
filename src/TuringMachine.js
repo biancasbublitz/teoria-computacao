@@ -15,7 +15,21 @@ function TuringMachine () {
   function start () {
     machineHead.currentState = availableStates.split(' ')[0]
 
+    const machineEntryIsValid = checkEntryAlphabet()
+
+    if (machineEntryIsValid) {
+      console.log('valid entry')
+    }
+
     readTransitionFunctions()
+  }
+
+  function checkEntryAlphabet () {
+    const filtered = machineEntry.filter(character => {
+      return entryAlphabet.includes(character)
+    })
+
+    return filtered.length === machineEntry.length
   }
 
   function readTransitionFunctions () {
