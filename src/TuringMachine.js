@@ -8,11 +8,11 @@ function TuringMachine () {
 
   const fileContent = fs.readFileSync('entry.txt').toString()
   const fileLines = fileContent.split('\n')
-  const machineInfo = fileLines.slice(0, 4)
+  const [machineInfo, availableStates, entryAlphabet, machineAlphabet] = fileLines.slice(0, 4)
   const machineEntry = fileLines.slice(-1).join()
 
   function start () {
-    machineHead.currentState = machineInfo[1].split(' ')[0]
+    machineHead.currentState = availableStates.split(' ')[0]
 
     machineHead.currentPosition = machineEntry[0]
 
@@ -26,11 +26,11 @@ function TuringMachine () {
       const [condition, result] = transitionFunction.split('=')
       const [state, entry] = condition.replace('(', '').replace(')', '').split(',')
 
-      if (!machineInfo[1].includes(state)) {
+      if (!availableStates.includes(state)) {
         throw new Error('Invalid parameter')
       }
 
-      if (!machineInfo[3].includes(entry)) {
+      if (!machineAlphabet.includes(entry)) {
         throw new Error('Invalid parameter')
       }
 
