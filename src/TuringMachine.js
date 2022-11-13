@@ -4,33 +4,37 @@ function Error (errorText) {
   return console.log(errorText)
 }
 
-function TuringMachine () {
+function TuringMachine (fileName) {
   const machineHead = {
     currentState: '0',
     currentPosition: 0
   }
 
-  const fileContent = fs.readFileSync('entry.txt').toString()
-  const fileLines = fileContent.split('\n')
-
-  const [machineInfo, availableStates, entryAlphabet, machineAlphabet] = fileLines.slice(0, 4)
-  const machineEntry = fileLines.slice(-1).toString().split('')
-
   function start () {
-    machineHead.currentState = availableStates.split(' ')[0]
+    const fileContent = fs.readFileSync(fileName).toString()
+    const fileLines = fileContent.split('\n')
 
-    const machineEntryIsValid = checkMachineEntryIsValid()
+    const [machineInfo, availableStates, entryAlphabet, machineAlphabet] = fileLines.slice(0, 4)
+    const machineEntry = fileLines.slice(-1).toString().split('')
+
+    const initialState = availableStates.split(' ')[0]
+    machineHead.currentState = initialState
+
+    const machineEntryIsValid = checkMachineEntryIsValid(machineEntry, entryAlphabet)
 
     if (!machineEntryIsValid) {
       return Error('Invalid entry')
     }
 
-    machineEntry.push(machineAlphabet.at(-1))
+    const emptyCharacter = machineAlphabet.at(-1)
+    machineEntry.push(emptyCharacter)
 
-    readTransitionFunctions()
+    const machineTransitionFunctions = fileLines.filter(line => line.includes('('))
+
+    readTransitionFunctions(machineTransitionFunctions, machineInfo, availableStates, machineAlphabet, machineEntry)
   }
 
-  function checkMachineEntryIsValid () {
+  function checkMachineEntryIsValid (machineEntry, entryAlphabet) {
     const filtered = machineEntry.filter(character => {
       return entryAlphabet.includes(character)
     })
@@ -38,9 +42,7 @@ function TuringMachine () {
     return filtered.length === machineEntry.length
   }
 
-  function readTransitionFunctions () {
-    const machineTransitionFunctions = fileLines.filter(line => line.includes('('))
-
+  function readTransitionFunctions (machineTransitionFunctions, machineInfo, availableStates, machineAlphabet, machineEntry) {
     for (let i = 0; i < Number(machineInfo.split(' ')[3]); i++) {
       const transitionFunction = machineTransitionFunctions[i]
 
