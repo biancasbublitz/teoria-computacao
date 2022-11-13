@@ -34,8 +34,16 @@ function TuringMachine () {
         throw new Error('Invalid parameter')
       }
 
-      // if (machineHead.currentState === state && machineEntry[machineHead.currentPosition] === entry) {
-      //   const [nextState, nextEntry, nextPosition] = result.replace('(', '').replace(')', '').split(',')
+      if (machineHead.currentState !== state || machineEntry[machineHead.currentPosition] !== entry) {
+        return false
+      }
+
+      console.log('hello')
+
+      // const [nextState, nextEntry, nextPosition] = result.replace('(', '').replace(')', '').split(',')
+
+      // if (!availableStates.includes(state)) {
+      //   throw new Error('Invalid parameter')
       // }
     })
   }
