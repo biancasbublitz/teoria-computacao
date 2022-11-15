@@ -10,7 +10,12 @@ function TuringMachine (fileName) {
       currentState: null,
       currentPosition: 0
     },
-    info: null,
+    info: {
+      numberOfStates: 0,
+      availableAlphabetLength: 0,
+      machineAlphabetLength: 0,
+      numberOfTransitions: 0
+    },
     availableStates: null,
     availableAlphabet: null,
     alphabet: null,
@@ -22,14 +27,19 @@ function TuringMachine (fileName) {
     const fileContent = fs.readFileSync(fileName).toString()
     const fileLines = fileContent.split('\n')
 
-    const [machineInfo, availableStates, availableAlphabet, machineAlphabet] = fileLines.slice(0, 4)
+    const [rawMachineInfo, availableStates, availableAlphabet, machineAlphabet] = fileLines.slice(0, 4)
+    const machineInfo = rawMachineInfo.split(' ')
 
-    machine.info = machineInfo.split(' ')
+    machine.info = {
+      numberOfStates: Number(machineInfo[0]),
+      availableAlphabetLength: Number(machineInfo[1]),
+      machineAlphabetLength: Number(machineInfo[2]),
+      numberOfTransitions: Number(machineInfo[3])
+    }
     machine.availableStates = availableStates.split(' ')
     machine.availableAlphabet = availableAlphabet
     machine.alphabet = machineAlphabet
-    machine.input = fileLines.slice(-1).join().split('')
-
+    machine.input = fileLines.slice(-1).join().length > 0 ? fileLines.slice(-1).join().split('') : ''
     machine.head.currentState = machine.availableStates[0]
 
     if (!checkMachineInputIsValid()) {
@@ -45,6 +55,8 @@ function TuringMachine (fileName) {
   }
 
   function checkMachineInputIsValid () {
+    if (!machine.input) return false
+
     const filtered = machine.input.filter(character => {
       return machine.availableAlphabet.includes(character)
     })
@@ -53,7 +65,7 @@ function TuringMachine (fileName) {
   }
 
   function readTransitionFunctions () {
-    for (let i = 0; i < Number(machine.info[3]); i++) {
+    for (let i = 0; i < machine.info.numberOfTransitions; i++) {
       const transitionFunction = machine.transitionFunctions[i]
 
       const [condition, result] = transitionFunction.split('=')
