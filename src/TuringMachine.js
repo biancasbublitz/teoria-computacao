@@ -16,9 +16,9 @@ function TuringMachine (fileName) {
       machineAlphabetLength: 0,
       numberOfTransitions: 0
     },
-    availableStates: null,
-    availableAlphabet: null,
-    alphabet: null,
+    availableStates: [],
+    availableAlphabet: [],
+    alphabet: [],
     transitionFunctions: [],
     input: null
   }
@@ -37,8 +37,8 @@ function TuringMachine (fileName) {
       numberOfTransitions: Number(machineInfo[3])
     }
     machine.availableStates = availableStates.split(' ')
-    machine.availableAlphabet = availableAlphabet
-    machine.alphabet = machineAlphabet
+    machine.availableAlphabet = availableAlphabet.split(' ')
+    machine.alphabet = machineAlphabet.split(' ')
     machine.input = fileLines.slice(-1).join().length > 0 ? fileLines.slice(-1).join().split('') : ''
     machine.head.currentState = machine.availableStates[0]
 
@@ -69,36 +69,38 @@ function TuringMachine (fileName) {
       const transitionFunction = machine.transitionFunctions[i]
 
       const [condition, result] = transitionFunction.split('=')
-      const [state, entry] = condition.replace('(', '').replace(')', '').split(',')
+      const [state, input] = condition.replace('(', '').replace(')', '').split(',')
 
       if (!machine.availableStates.includes(state)) {
-        return Error('Invalid parameter')
+        return Error(`Invalid state: ${state}`)
       }
 
-      if (!machine.alphabet.includes(entry)) {
-        return Error('Invalid parameter')
+      if (!machine.alphabet.includes(input)) {
+        return Error(`Invalid machine input: ${input}`)
       }
 
-      if (machine.head.currentState !== state || machine.input[machine.head.currentPosition] !== entry) {
+      if (machine.head.currentState !== state || machine.input[machine.head.currentPosition] !== input) {
         continue
       }
 
-      const [nextState, nextEntry, nextPosition] = result.replace('(', '').replace(')', '').split(',')
+      const [nextState, nextInput, nextPosition] = result.replace('(', '').replace(')', '').split(',')
 
       if (!machine.availableStates.includes(nextState)) {
-        return Error('Invalid parameter')
+        return Error(`Invalid state: ${nextState}`)
       }
 
-      if (!machine.alphabet.includes(nextEntry)) {
-        return Error('Invalid parameter')
+      if (!machine.alphabet.includes(nextInput)) {
+        return Error(`Invalid machine input: ${nextInput}`)
       }
 
-      if (!['L', 'R'].includes(nextPosition)) {
-        return Error('Invalid parameter')
+      const availableDirections = ['L', 'R']
+
+      if (!availableDirections.includes(nextPosition)) {
+        return Error(`Invalid direction: ${nextPosition}`)
       }
 
       machine.head.currentState = nextState
-      machine.input[machine.head.currentPosition] = nextEntry
+      machine.input[machine.head.currentPosition] = nextInput
       machine.head.currentPosition = nextPosition === 'R' ? Number(machine.head.currentPosition) + 1 : Number(machine.head.currentPosition) - 1
 
       i = 0
