@@ -5,69 +5,79 @@ function Error (errorText) {
 }
 
 function TuringMachine (fileName) {
-  const machineHead = {
-    currentState: '0',
-    currentPosition: 0
+  const machine = {
+    head: {
+      currentState: null,
+      currentPosition: 0
+    },
+    info: null,
+    availableStates: null,
+    availableAlphabet: null,
+    alphabet: null,
+    transitionFunctions: [],
+    input: null
   }
 
   function start () {
     const fileContent = fs.readFileSync(fileName).toString()
     const fileLines = fileContent.split('\n')
 
-    const [machineInfo, availableStates, entryAlphabet, machineAlphabet] = fileLines.slice(0, 4)
-    const machineEntry = fileLines.slice(-1).toString().split('')
+    const [machineInfo, availableStates, availableAlphabet, machineAlphabet] = fileLines.slice(0, 4)
 
-    const initialState = availableStates.split(' ')[0]
-    machineHead.currentState = initialState
+    machine.info = machineInfo.split(' ')
+    machine.availableStates = availableStates.split(' ')
+    machine.availableAlphabet = availableAlphabet
+    machine.alphabet = machineAlphabet
+    machine.input = fileLines.slice(-1).join().split('')
 
-    const machineEntryIsValid = checkMachineEntryIsValid(machineEntry, entryAlphabet)
+    machine.head.currentState = machine.availableStates[0]
 
-    if (!machineEntryIsValid) {
-      return Error('Invalid entry')
+    if (!checkMachineInputIsValid()) {
+      return Error('Invalid input')
     }
 
-    const emptyCharacter = machineAlphabet.at(-1)
-    machineEntry.push(emptyCharacter)
+    const emptyCharacter = machine.alphabet.at(-1)
+    machine.input.push(emptyCharacter)
 
-    const machineTransitionFunctions = fileLines.filter(line => line.includes('('))
+    machine.transitionFunctions = fileLines.filter(line => line.includes('('))
 
-    readTransitionFunctions(machineTransitionFunctions, machineInfo, availableStates, machineAlphabet, machineEntry)
+    readTransitionFunctions()
   }
 
-  function checkMachineEntryIsValid (machineEntry, entryAlphabet) {
-    const filtered = machineEntry.filter(character => {
-      return entryAlphabet.includes(character)
+  function checkMachineInputIsValid () {
+    const filtered = machine.input.filter(character => {
+      return machine.availableAlphabet.includes(character)
     })
 
-    return filtered.length === machineEntry.length
+    return filtered.length === machine.input.length
   }
 
-  function readTransitionFunctions (machineTransitionFunctions, machineInfo, availableStates, machineAlphabet, machineEntry) {
-    for (let i = 0; i < Number(machineInfo.split(' ')[3]); i++) {
-      const transitionFunction = machineTransitionFunctions[i]
+  function readTransitionFunctions () {
+    for (let i = 0; i < Number(machine.info[3]); i++) {
+      const transitionFunction = machine.transitionFunctions[i]
 
       const [condition, result] = transitionFunction.split('=')
       const [state, entry] = condition.replace('(', '').replace(')', '').split(',')
 
-      if (!availableStates.includes(state)) {
+      if (!machine.availableStates.includes(state)) {
         return Error('Invalid parameter')
       }
 
-      if (!machineAlphabet.includes(entry)) {
+      if (!machine.alphabet.includes(entry)) {
         return Error('Invalid parameter')
       }
 
-      if (machineHead.currentState !== state || machineEntry[machineHead.currentPosition] !== entry) {
+      if (machine.head.currentState !== state || machine.input[machine.head.currentPosition] !== entry) {
         continue
       }
 
       const [nextState, nextEntry, nextPosition] = result.replace('(', '').replace(')', '').split(',')
 
-      if (!availableStates.includes(nextState)) {
+      if (!machine.availableStates.includes(nextState)) {
         return Error('Invalid parameter')
       }
 
-      if (!machineAlphabet.includes(nextEntry)) {
+      if (!machine.alphabet.includes(nextEntry)) {
         return Error('Invalid parameter')
       }
 
@@ -75,14 +85,14 @@ function TuringMachine (fileName) {
         return Error('Invalid parameter')
       }
 
-      machineHead.currentState = nextState
-      machineEntry[machineHead.currentPosition] = nextEntry
-      machineHead.currentPosition = nextPosition === 'R' ? Number(machineHead.currentPosition) + 1 : Number(machineHead.currentPosition) - 1
+      machine.head.currentState = nextState
+      machine.input[machine.head.currentPosition] = nextEntry
+      machine.head.currentPosition = nextPosition === 'R' ? Number(machine.head.currentPosition) + 1 : Number(machine.head.currentPosition) - 1
 
       i = 0
     }
 
-    if (machineHead.currentState === availableStates.slice(-1)) {
+    if (machine.head.currentState === machine.availableStates.at(-1)) {
       return Error('Accepted')
     } else {
       return Error('Denied')
