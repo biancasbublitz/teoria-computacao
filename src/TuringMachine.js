@@ -20,6 +20,7 @@ function TuringMachine (fileName) {
     availableAlphabet: [],
     alphabet: [],
     transitionFunctions: [],
+    reversibleTransitionFunctions: [],
     input: null
   }
 
@@ -51,7 +52,48 @@ function TuringMachine (fileName) {
 
     machine.transitionFunctions = fileLines.filter(line => line.includes('('))
 
-    readTransitionFunctions()
+    const machineTransitionFunctionsAreValid = checkMachineTransitionFunctionsAreValid()
+
+    if (machineTransitionFunctionsAreValid.success === false) {
+      return Error(machineTransitionFunctionsAreValid.error)
+    }
+
+    // readTransitionFunctions()
+    fillReversibleTransitionFunctions()
+    runReversibleTransitionFunctions()
+  }
+
+  function checkMachineTransitionFunctionsAreValid () {
+    for (const transitionFunction of machine.transitionFunctions) {
+      const [condition, result] = transitionFunction.split('=')
+      const [state, input] = condition.replace('(', '').replace(')', '').split(',')
+
+      if (!machine.availableStates.includes(state)) {
+        return { success: false, error: `Invalid state: ${state}` }
+      }
+
+      if (!machine.alphabet.includes(input)) {
+        return { success: false, error: `Invalid machine input: ${input}` }
+      }
+
+      const [nextState, nextInput, nextPosition] = result.replace('(', '').replace(')', '').split(',')
+
+      if (!machine.availableStates.includes(nextState)) {
+        return { success: false, error: `Invalid state: ${nextState}` }
+      }
+
+      if (!machine.alphabet.includes(nextInput)) {
+        return { success: false, error: `Invalid machine input: ${nextInput}` }
+      }
+
+      const availableDirections = ['L', 'R']
+
+      if (!availableDirections.includes(nextPosition)) {
+        return { success: false, error: `Invalid direction: ${nextPosition}` }
+      }
+    }
+
+    return { success: true }
   }
 
   function checkMachineInputIsValid () {
@@ -64,46 +106,97 @@ function TuringMachine (fileName) {
     return filtered.length === machine.input.length
   }
 
-  function readTransitionFunctions () {
-    for (let i = 0; i < machine.info.numberOfTransitions; i++) {
-      const transitionFunction = machine.transitionFunctions[i]
+  // function readTransitionFunctions () {
+  //   for (let i = 0; i < machine.info.numberOfTransitions; i++) {
+  //     const transitionFunction = machine.transitionFunctions[i]
 
+  //     const [condition, result] = transitionFunction.split('=')
+  //     const [state, input] = condition.replace('(', '').replace(')', '').split(',')
+
+  //     if (!machine.availableStates.includes(state)) {
+  //       return Error(`Invalid state: ${state}`)
+  //     }
+
+  //     if (!machine.alphabet.includes(input)) {
+  //       return Error(`Invalid machine input: ${input}`)
+  //     }
+
+  //     if (machine.head.currentState !== state || machine.input[machine.head.currentPosition] !== input) {
+  //       continue
+  //     }
+
+  //     const [nextState, nextInput, nextPosition] = result.replace('(', '').replace(')', '').split(',')
+
+  //     if (!machine.availableStates.includes(nextState)) {
+  //       return Error(`Invalid state: ${nextState}`)
+  //     }
+
+  //     if (!machine.alphabet.includes(nextInput)) {
+  //       return Error(`Invalid machine input: ${nextInput}`)
+  //     }
+
+  //     const availableDirections = ['L', 'R']
+
+  //     if (!availableDirections.includes(nextPosition)) {
+  //       return Error(`Invalid direction: ${nextPosition}`)
+  //     }
+
+  //     machine.head.currentState = nextState
+  //     machine.input[machine.head.currentPosition] = nextInput
+  //     machine.head.currentPosition = nextPosition === 'R' ? Number(machine.head.currentPosition) + 1 : Number(machine.head.currentPosition) - 1
+
+  //     i = 0
+  //   }
+
+  //   if (machine.head.currentState === machine.availableStates.at(-1)) {
+  //     return Error('Accepted')
+  //   } else {
+  //     return Error('Denied')
+  //   }
+  // }
+
+  function fillReversibleTransitionFunctions () {
+    machine.transitionFunctions.forEach((transitionFunction, index) => {
       const [condition, result] = transitionFunction.split('=')
-      const [state, input] = condition.replace('(', '').replace(')', '').split(',')
-
-      if (!machine.availableStates.includes(state)) {
-        return Error(`Invalid state: ${state}`)
-      }
-
-      if (!machine.alphabet.includes(input)) {
-        return Error(`Invalid machine input: ${input}`)
-      }
-
-      if (machine.head.currentState !== state || machine.input[machine.head.currentPosition] !== input) {
-        continue
-      }
+      const [currentState, currentInput] = condition.replace('(', '').replace(')', '').split(',')
 
       const [nextState, nextInput, nextPosition] = result.replace('(', '').replace(')', '').split(',')
 
-      if (!machine.availableStates.includes(nextState)) {
-        return Error(`Invalid state: ${nextState}`)
+      const reversibleNextPosition = nextPosition === 'R' ? '+' : '-'
+
+      machine.reversibleTransitionFunctions.push(`${currentState} ${currentInput}->${nextInput} ${currentState}_${index}`)
+      machine.reversibleTransitionFunctions.push(`${currentState}_${index} /->\\ ${reversibleNextPosition} ${nextState}`)
+    })
+  }
+
+  function runReversibleTransitionFunctions () {
+    for (let i = 0; i < machine.reversibleTransitionFunctions.length; i++) {
+      const transitionFunction = machine.reversibleTransitionFunctions[i]
+
+      const [condition, result] = transitionFunction.split('->')
+      const [state, inputOrAction] = condition.split(' ')
+
+      if (machine.head.currentState !== state) {
+        continue
       }
 
-      if (!machine.alphabet.includes(nextInput)) {
-        return Error(`Invalid machine input: ${nextInput}`)
+      if (machine.input[machine.head.currentPosition] === inputOrAction) {
+        const [nextInput, nextState] = result.split(' ')
+
+        machine.head.currentState = nextState
+        machine.input[machine.head.currentPosition] = nextInput
+
+        continue
       }
 
-      const availableDirections = ['L', 'R']
+      if (inputOrAction === '/') {
+        const [, nextPosition, nextState] = result.split(' ')
 
-      if (!availableDirections.includes(nextPosition)) {
-        return Error(`Invalid direction: ${nextPosition}`)
+        machine.head.currentState = nextState
+        machine.head.currentPosition = nextPosition === '+' ? Number(machine.head.currentPosition) + 1 : Number(machine.head.currentPosition) - 1
+
+        i = 0
       }
-
-      machine.head.currentState = nextState
-      machine.input[machine.head.currentPosition] = nextInput
-      machine.head.currentPosition = nextPosition === 'R' ? Number(machine.head.currentPosition) + 1 : Number(machine.head.currentPosition) - 1
-
-      i = 0
     }
 
     if (machine.head.currentState === machine.availableStates.at(-1)) {
