@@ -6,7 +6,9 @@ function TuringMachine (fileName) {
   const machine = {
     head: {
       currentState: null,
-      currentPosition: 0
+      inputCurrentPosition: 0,
+      historyCurrentPosition: 0,
+      outputCurrentPosition: 0
     },
     info: {
       numberOfStates: 0,
@@ -19,7 +21,11 @@ function TuringMachine (fileName) {
     alphabet: [],
     transitionFunctions: [],
     reversibleTransitionFunctions: [],
-    input: null
+    tapes: {
+      input: null,
+      history: [],
+      output: []
+    }
   }
 
   function start () {
@@ -39,7 +45,7 @@ function TuringMachine (fileName) {
     machine.availableStates = availableStates.split(' ')
     machine.availableAlphabet = availableAlphabet.split(' ')
     machine.alphabet = machineAlphabet.split(' ')
-    machine.input = fileLines.slice(-1).join().length > 0 ? fileLines.slice(-1).join().split('') : ''
+    machine.tapes.input = fileLines.slice(-1).join().length > 0 ? fileLines.slice(-1).join().split('') : ''
     machine.head.currentState = machine.availableStates[0]
 
     if (!checkMachineInputIsValid()) {
@@ -47,7 +53,7 @@ function TuringMachine (fileName) {
     }
 
     const emptyCharacter = machine.alphabet.at(-1)
-    machine.input.push(emptyCharacter)
+    machine.tapes.input.push(emptyCharacter)
 
     machine.transitionFunctions = fileLines.filter(line => line.includes('('))
 
@@ -95,26 +101,25 @@ function TuringMachine (fileName) {
   }
 
   function checkMachineInputIsValid () {
-    if (!machine.input) return false
+    if (!machine.tapes.input) return false
 
-    const filtered = machine.input.filter(character => {
+    const filtered = machine.tapes.input.filter(character => {
       return machine.availableAlphabet.includes(character)
     })
 
-    return filtered.length === machine.input.length
+    return filtered.length === machine.tapes.input.length
   }
 
   function fillReversibleTransitionFunctions () {
     machine.transitionFunctions.forEach((transitionFunction, index) => {
       const [condition, result] = transitionFunction.split('=')
       const [currentState, currentInput] = condition.replace('(', '').replace(')', '').split(',')
-
       const [nextState, nextInput, nextPosition] = result.replace('(', '').replace(')', '').split(',')
-
       const reversibleNextPosition = nextPosition === 'R' ? '+' : '-'
+      const emptyCharacter = machine.tapes.input[machine.tapes.input.length - 1]
 
-      machine.reversibleTransitionFunctions.push(`${currentState} ${currentInput}->${nextInput} ${currentState}_${index}`)
-      machine.reversibleTransitionFunctions.push(`${currentState}_${index} /->\\ ${reversibleNextPosition} ${nextState}`)
+      machine.reversibleTransitionFunctions.push(`${currentState}[${currentInput} / ${emptyCharacter}]->[${nextInput} + ${emptyCharacter}]${currentState}_${index}`)
+      machine.reversibleTransitionFunctions.push(`${currentState}_${index}[/ ${emptyCharacter} /]->[\\ ${reversibleNextPosition} ${currentState}_${index} 0]${nextState}`)
     })
   }
 
@@ -123,26 +128,33 @@ function TuringMachine (fileName) {
       const transitionFunction = machine.reversibleTransitionFunctions[i]
 
       const [condition, result] = transitionFunction.split('->')
-      const [state, inputOrAction] = condition.split(' ')
+      const [state, tapesInfo] = condition.replace(']', '').split('[')
+      const [input, history, output] = tapesInfo.split(' ')
 
       if (machine.head.currentState !== state) {
         continue
       }
 
-      if (machine.input[machine.head.currentPosition] === inputOrAction) {
-        const [nextInput, nextState] = result.split(' ')
+      if (machine.tapes.input[machine.head.inputCurrentPosition] === input) {
+        const [nextTapesInfo, nextState] = result.replace('[', '').split(']')
+        const [inputNextInput, historyNextPosition, outputNextInput] = nextTapesInfo.split(' ')
 
         machine.head.currentState = nextState
-        machine.input[machine.head.currentPosition] = nextInput
+        machine.tapes.input[machine.head.inputCurrentPosition] = inputNextInput
+        machine.head.historyCurrentPosition = historyNextPosition === '+' ? Number(machine.head.historyNextPosition) + 1 : Number(machine.head.historyNextPosition) - 1
+        machine.tapes.output[machine.head.outputCurrentPosition] = outputNextInput
 
         continue
       }
 
-      if (inputOrAction === '/') {
-        const [, nextPosition, nextState] = result.split(' ')
+      if (input === '/') {
+        const [nextTapesInfo, nextState] = result.replace('[\\ ', '').split(']')
+        const [inputNextPosition, historyNextInput, outputNextPosition] = nextTapesInfo.split(' ')
 
         machine.head.currentState = nextState
-        machine.head.currentPosition = nextPosition === '+' ? Number(machine.head.currentPosition) + 1 : Number(machine.head.currentPosition) - 1
+        machine.head.inputCurrentPosition = inputNextPosition === '+' ? Number(machine.head.inputCurrentPosition) + 1 : Number(machine.head.inputCurrentPosition) - 1
+        machine.tapes.history.push(historyNextInput)
+        // machine.head.outputCurrentPosition = machine.head.outputCurrentPosition
 
         i = 0
       }
