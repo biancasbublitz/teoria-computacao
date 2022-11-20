@@ -1,5 +1,3 @@
-const fs = require('fs')
-
 function Error (errorText) {
   return console.log(errorText)
 }
@@ -25,6 +23,7 @@ function TuringMachine (fileName) {
   }
 
   function start () {
+    const fs = require('fs')
     const fileContent = fs.readFileSync(fileName).toString()
     const fileLines = fileContent.split('\n')
 
@@ -58,7 +57,6 @@ function TuringMachine (fileName) {
       return Error(machineTransitionFunctionsAreValid.error)
     }
 
-    // readTransitionFunctions()
     fillReversibleTransitionFunctions()
     runReversibleTransitionFunctions()
   }
@@ -105,55 +103,6 @@ function TuringMachine (fileName) {
 
     return filtered.length === machine.input.length
   }
-
-  // function readTransitionFunctions () {
-  //   for (let i = 0; i < machine.info.numberOfTransitions; i++) {
-  //     const transitionFunction = machine.transitionFunctions[i]
-
-  //     const [condition, result] = transitionFunction.split('=')
-  //     const [state, input] = condition.replace('(', '').replace(')', '').split(',')
-
-  //     if (!machine.availableStates.includes(state)) {
-  //       return Error(`Invalid state: ${state}`)
-  //     }
-
-  //     if (!machine.alphabet.includes(input)) {
-  //       return Error(`Invalid machine input: ${input}`)
-  //     }
-
-  //     if (machine.head.currentState !== state || machine.input[machine.head.currentPosition] !== input) {
-  //       continue
-  //     }
-
-  //     const [nextState, nextInput, nextPosition] = result.replace('(', '').replace(')', '').split(',')
-
-  //     if (!machine.availableStates.includes(nextState)) {
-  //       return Error(`Invalid state: ${nextState}`)
-  //     }
-
-  //     if (!machine.alphabet.includes(nextInput)) {
-  //       return Error(`Invalid machine input: ${nextInput}`)
-  //     }
-
-  //     const availableDirections = ['L', 'R']
-
-  //     if (!availableDirections.includes(nextPosition)) {
-  //       return Error(`Invalid direction: ${nextPosition}`)
-  //     }
-
-  //     machine.head.currentState = nextState
-  //     machine.input[machine.head.currentPosition] = nextInput
-  //     machine.head.currentPosition = nextPosition === 'R' ? Number(machine.head.currentPosition) + 1 : Number(machine.head.currentPosition) - 1
-
-  //     i = 0
-  //   }
-
-  //   if (machine.head.currentState === machine.availableStates.at(-1)) {
-  //     return Error('Accepted')
-  //   } else {
-  //     return Error('Denied')
-  //   }
-  // }
 
   function fillReversibleTransitionFunctions () {
     machine.transitionFunctions.forEach((transitionFunction, index) => {
