@@ -15,7 +15,8 @@ function TuringMachine (fileName) {
     availableAlphabet: [],
     alphabet: [],
     transitionFunctions: [],
-    reversibleTransitionFunctions: []
+    reversibleTransitionFunctions: [],
+    revertedTransitionFunctions: []
   }
 
   const inputTape = {
@@ -70,6 +71,8 @@ function TuringMachine (fileName) {
 
     fillReversibleTransitionFunctions()
     runReversibleTransitionFunctions()
+    copyInputTapeToOutputTape()
+    revertReversibleTransitionFunctions()
   }
 
   function checkMachineTransitionFunctionsAreValid () {
@@ -147,7 +150,7 @@ function TuringMachine (fileName) {
         machineInfo.currentState = nextState
         inputTape.content[inputTape.currentPosition] = inputNextInput
         historyTape.currentPosition = historyNextPosition === '+' ? Number(historyTape.currentPosition) + 1 : Number(historyTape.currentPosition) - 1
-        outputTape[outputTape.currentPosition] = outputNextInput
+        outputTape.content[outputTape.currentPosition] = outputNextInput
 
         continue
       }
@@ -170,6 +173,37 @@ function TuringMachine (fileName) {
     } else {
       return Error('Denied')
     }
+  }
+
+  function copyInputTapeToOutputTape () {
+    outputTape.content.splice(0)
+    inputTape.content.forEach(character => outputTape.content.push(character))
+  }
+
+  function revertReversibleTransitionFunctions () {
+    machineInfo.reversibleTransitionFunctions.forEach((transitionFunction, index) => {
+      const [condition, result] = transitionFunction.split('->')
+      const [state, tapesInfo] = condition.replace(']', '').split('[')
+      const [input, history, output] = tapesInfo.split(' ')
+
+      const emptyCharacter = inputTape.content[inputTape.content.length - 1]
+
+      if (input === '/') {
+        const [nextTapesInfo, nextState] = result.replace('[\\ ', '').split(']')
+        const [inputNextPosition, historyNextInput, outputNextPosition] = nextTapesInfo.split(' ')
+
+        const nextPosition = inputNextPosition === '+' ? '-' : '+'
+
+        machineInfo.revertedTransitionFunctions.push(`${nextState}[/ ${state} /]->[\\${nextPosition} ${emptyCharacter} 0] ${state}`)
+      } else {
+        const [nextTapesInfo, nextState] = result.replace('[', '').split(']')
+        const [inputNextInput, historyNextPosition, outputNextInput] = nextTapesInfo.split(' ')
+
+        const nextPosition = historyNextPosition === '+' ? '-' : '+'
+
+        machineInfo.revertedTransitionFunctions.push(`${nextState}[${inputNextInput} / ${emptyCharacter}]->[0 ${nextPosition} ${emptyCharacter}]${state}`)
+      }
+    })
   }
 
   return {
