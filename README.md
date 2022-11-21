@@ -18,6 +18,4 @@ Por padrão, tem-se algumas regras:
 3. Os movimentos de fita contidos nas funções de transição devem ser "R" ou "L", em formato de caixa alta
 4. O último caracter do alfabeto da fita (linha 4) deve ser o branco, represnetado por "B"
 
-
-
-        
+Slide: https://docs.google.com/presentation/d/1TVc7Bd0C-17o1wbD6TudXj1YMjWK0v5LxUa37khia00/edit?usp=drivesdk
