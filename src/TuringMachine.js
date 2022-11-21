@@ -73,6 +73,13 @@ function TuringMachine (fileName) {
     runReversibleTransitionFunctions()
     copyInputTapeToOutputTape()
     revertReversibleTransitionFunctions()
+    runRevertedTransitionFunctions()
+
+    if (machineInfo.currentState === machineInfo.availableStates[0]) {
+      return Error('Accepted')
+    } else {
+      return Error('Denied')
+    }
   }
 
   function checkMachineTransitionFunctionsAreValid () {
@@ -162,16 +169,9 @@ function TuringMachine (fileName) {
         machineInfo.currentState = nextState
         inputTape.currentPosition = inputNextPosition === '+' ? Number(inputTape.currentPosition) + 1 : Number(inputTape.currentPosition) - 1
         historyTape.content.push(historyNextInput)
-        // machineInfo.head.outputCurrentPosition = machineInfo.head.outputCurrentPosition
 
         i = 0
       }
-    }
-
-    if (machineInfo.currentState === machineInfo.availableStates.at(-1)) {
-      return Error('Accepted')
-    } else {
-      return Error('Denied')
     }
   }
 
@@ -181,7 +181,7 @@ function TuringMachine (fileName) {
   }
 
   function revertReversibleTransitionFunctions () {
-    machineInfo.reversibleTransitionFunctions.forEach((transitionFunction, index) => {
+    machineInfo.reversibleTransitionFunctions.forEach(transitionFunction => {
       const [condition, result] = transitionFunction.split('->')
       const [state, tapesInfo] = condition.replace(']', '').split('[')
       const [input, history, output] = tapesInfo.split(' ')
@@ -192,18 +192,78 @@ function TuringMachine (fileName) {
         const [nextTapesInfo, nextState] = result.replace('[\\ ', '').split(']')
         const [inputNextPosition, historyNextInput, outputNextPosition] = nextTapesInfo.split(' ')
 
-        const nextPosition = inputNextPosition === '+' ? '-' : '+'
-
-        machineInfo.revertedTransitionFunctions.push(`${nextState}[/ ${state} /]->[\\${nextPosition} ${emptyCharacter} 0] ${state}`)
+        const oppositeInputNextPosition = inputNextPosition === '+' ? '-' : '+'
+        machineInfo.revertedTransitionFunctions.push(`${nextState}[/ ${historyNextInput} /]->[\\ ${oppositeInputNextPosition} ${emptyCharacter} ${oppositeInputNextPosition}]${state}`)
       } else {
         const [nextTapesInfo, nextState] = result.replace('[', '').split(']')
         const [inputNextInput, historyNextPosition, outputNextInput] = nextTapesInfo.split(' ')
 
-        const nextPosition = historyNextPosition === '+' ? '-' : '+'
+        const oppositeHistoryNextPosition = historyNextPosition === '+' ? '-' : '+'
 
-        machineInfo.revertedTransitionFunctions.push(`${nextState}[${inputNextInput} / ${emptyCharacter}]->[0 ${nextPosition} ${emptyCharacter}]${state}`)
+        machineInfo.revertedTransitionFunctions.push(`${nextState}[${inputNextInput} / ${inputNextInput}]->[${input} ${oppositeHistoryNextPosition} ${inputNextInput}]${state}`)
       }
     })
+  }
+
+  function runRevertedTransitionFunctions () {
+    machineInfo.currentState = machineInfo.availableStates.at(-1)
+    historyTape.currentPosition -= 1
+    outputTape.currentPosition = inputTape.currentPosition
+
+    for (let i = 0; i < machineInfo.revertedTransitionFunctions.length; i++) {
+      const transitionFunction = machineInfo.revertedTransitionFunctions[i]
+
+      const [condition, result] = transitionFunction.split('->')
+      const [state, tapesInfo] = condition.replace(']', '').split('[')
+      const [input, history, output] = tapesInfo.split(' ')
+
+      if (machineInfo.currentState !== state) {
+        continue
+      }
+
+      if (machineInfo.currentState === state && inputTape.content[inputTape.currentPosition] === input) {
+        const [nextTapesInfo, nextState] = result.replace('[', '').split(']')
+        const [inputNextInput, historyNextPosition, outputNextInput] = nextTapesInfo.split(' ')
+
+        inputTape.content[inputTape.currentPosition] = inputNextInput
+
+        if (historyNextPosition === '+') {
+          historyTape.currentPosition = Number(historyTape.currentPosition) + 1
+        } else if (historyNextPosition === '-') {
+          historyTape.currentPosition = Number(historyTape.currentPosition) - 1
+        }
+
+        machineInfo.currentState = nextState
+        i = 0
+      }
+
+      if (input === '/' && historyTape.content[historyTape.currentPosition] === history) {
+        const [nextTapesInfo, nextState] = result.replace('[\\ ', '').split(']')
+        const [inputNextPosition, historyNextInput, outputNextPosition] = nextTapesInfo.split(' ')
+
+        if (inputNextPosition === '+') {
+          inputTape.currentPosition = Number(inputTape.currentPosition) + 1
+        } else if (inputNextPosition === '-') {
+          inputTape.currentPosition = Number(inputTape.currentPosition) - 1
+        }
+
+        historyTape.content[historyTape.currentPosition] = historyNextInput
+
+        if (outputNextPosition === '+') {
+          outputTape.currentPosition = Number(outputTape.currentPosition) + 1
+        } else if (outputNextPosition === '-') {
+          outputTape.currentPosition = Number(outputTape.currentPosition) - 1
+        }
+
+        machineInfo.currentState = nextState
+        i = 0
+      }
+    }
+
+    console.log(machineInfo.currentState)
+    console.log(inputTape)
+    console.log(historyTape)
+    console.log(outputTape)
   }
 
   return {
