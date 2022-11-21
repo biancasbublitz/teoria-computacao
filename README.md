@@ -3,6 +3,7 @@
 O programa simula a execução de uma Máquina de Tuting Reversível, utilizando a linguagem JavaScript. 
 
 A entrada se dá via arquivo, e segue o seguinte formato:
+
 A primeira linha é composta por números que indicam, respectivamente: o número de estados, o número de símbolos no alfabeto de entrada, o número de símbolos no alfabeto da fita e o número de transições. A seguir, temos os estados, na próxima linha o alfabeto de entrada e logo o alfabeto da fita. Nas linhas sequentes temos as funções de transição em formato de quíntuplas. Depois da funcão de transição, segue uma entrada.
 
 Você pode chamar o programa com o comando
