@@ -49,8 +49,11 @@ function TuringMachine (fileName) {
       numberOfTransitions: Number(machineData[3])
     }
     machineInfo.availableStates = availableStates.split(' ')
+    machineInfo.availableStates = machineInfo.availableStates.map(val => val.replace(/\r$/, ''));
     machineInfo.availableAlphabet = availableAlphabet.split(' ')
+    machineInfo.availableAlphabet = machineInfo.availableAlphabet.map(val => val.replace(/\r$/, ''));
     machineInfo.alphabet = machineAlphabet.split(' ')
+    machineInfo.alphabet = machineInfo.alphabet.map(val => val.replace(/\r$/, ''));
     inputTape.content = fileLines.slice(-1).join().length > 0 ? fileLines.slice(-1).join().split('') : ''
     machineInfo.currentState = machineInfo.availableStates[0]
 
@@ -62,6 +65,7 @@ function TuringMachine (fileName) {
     inputTape.content.push(emptyCharacter)
 
     machineInfo.transitionFunctions = fileLines.filter(line => line.includes('('))
+    machineInfo.transitionFunctions = machineInfo.transitionFunctions.map(val => val.replace(/\r$/, ''));
 
     const machineTransitionFunctionsAreValid = checkMachineTransitionFunctionsAreValid()
 
@@ -76,7 +80,12 @@ function TuringMachine (fileName) {
     runRevertedTransitionFunctions()
 
     if (machineInfo.currentState === machineInfo.availableStates[0]) {
-      return Error('Accepted')
+      
+      console.log('Input: ', inputTape.content)
+      console.log('\nHistory: ', historyTape.content)
+      console.log('\nOutput: ', outputTape.content)
+
+      return Error('\nAccepted')
     } else {
       return Error('Denied')
     }
@@ -234,7 +243,7 @@ function TuringMachine (fileName) {
         }
 
         machineInfo.currentState = nextState
-        i = 0
+        i = -1
       }
 
       if (input === '/' && historyTape.content[historyTape.currentPosition] === history) {
@@ -247,7 +256,7 @@ function TuringMachine (fileName) {
           inputTape.currentPosition = Number(inputTape.currentPosition) - 1
         }
 
-        historyTape.content[historyTape.currentPosition] = historyNextInput
+        historyTape.content.pop()
 
         if (outputNextPosition === '+') {
           outputTape.currentPosition = Number(outputTape.currentPosition) + 1
@@ -256,14 +265,12 @@ function TuringMachine (fileName) {
         }
 
         machineInfo.currentState = nextState
-        i = 0
+        i = -1
       }
     }
 
-    console.log(machineInfo.currentState)
-    console.log(inputTape)
-    console.log(historyTape)
-    console.log(outputTape)
+    inputTape.content.pop()
+    outputTape.content.pop()
   }
 
   return {
